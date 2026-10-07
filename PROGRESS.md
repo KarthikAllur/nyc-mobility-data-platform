@@ -32,17 +32,22 @@
 
 ## Phase 0 - Setup
 
-**Status**: In Progress  
-**Roadmap connection**: Data Engineering Fundamentals - Version Control (Git)
+**Status**: Completed
+**Completed date**: October 2026
 
 ### Completed
 - [x] GitHub repository created
 - [x] Repository cloned locally
-- [x] Folder structure created
-- [x] Documentation files created
+- [x] Folder structure created (Bronze/Silver/Gold, ADF, Databricks, SQL, Python, Config)
+- [x] Documentation files created (README, ARCHITECTURE, DECISIONS, DATA_DICTIONARY)
+- [x] Azure free account activated
+- [x] Resource Group created: rg-nyc-mobility-dev (Central India)
+- [x] First commit pushed to GitHub
 
-### In Progress
-- [ ] Azure resource group created
-- [ ] Budget alert configured
-- [ ] Local dev tools verified (Python, VS Code)
-- [ ] First commit pushed to GitHub
+### Key concepts learned
+- Git version control (add, commit, push)
+- GitHub PAT authentication for multiple accounts
+- Azure Free Account vs Pay-As-You-Go
+- Azure Directory/Tenant concept
+- Resource Group purpose and naming conventions
+- .gitkeep convention for empty folders
