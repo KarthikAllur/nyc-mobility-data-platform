@@ -16,8 +16,8 @@
 | 2 | ADLS Gen2 | Completed | October 2026 |
 | 3 | Data Sources | Completed | October 2026 |
 | 4 | Azure Data Factory | Completed | October 2026 |
-| 5 | Databricks | Not Started | - |
-| 6 | Silver Layer | Not Started | - |
+| 5 | Databricks | Completed | October 2026 |
+| 6 | Silver Layer | In Progress | - |
 | 7 | Gold Layer | Not Started | - |
 | 8 | Orchestration | Not Started | - |
 | 9 | Analytics | Not Started | - |
@@ -128,3 +128,25 @@
 - Passing parameters from parent pipelines to child pipelines
 - Master Controller pattern using Execute Pipeline activities
 - Concurrency & parallel activity execution in ADF (running multiple pipelines simultaneously)
+
+---
+
+## Phase 5 - Azure Databricks
+
+**Status**: Completed
+**Completed date**: October 2026
+
+### Completed
+- [x] Azure Databricks Premium workspace deployed: `dbw-nyc-mobility-dev`
+- [x] Azure Access Connector configured (`dbw-access-connector`)
+- [x] IAM Role Assignment: Storage Blob Data Contributor on `stnycmobilitydevka`
+- [x] Unity Catalog Storage Credential (`cred_adls_nyc_mobility`)
+- [x] Unity Catalog External Location (`loc_adls_mobility`)
+- [x] Modern Serverless Compute validated
+- [x] Authenticated ADLS Gen2 read via Apache Spark without hardcoded keys
+
+### Key concepts learned
+- Unity Catalog governance & Azure Managed Identity for zero-trust security
+- Databricks Serverless Compute vs Classic Clusters
+- ABFS protocol driver (`abfss://`) and DFS endpoints
+- SparkSession, DataFrames, and distributed reading
