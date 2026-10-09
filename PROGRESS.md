@@ -17,8 +17,8 @@
 | 3 | Data Sources | Completed | October 2026 |
 | 4 | Azure Data Factory | Completed | October 2026 |
 | 5 | Databricks | Completed | October 2026 |
-| 6 | Silver Layer | In Progress | - |
-| 7 | Gold Layer | Not Started | - |
+| 6 | Silver Layer | Completed | October 2026 |
+| 7 | Gold Layer | In Progress | - |
 | 8 | Orchestration | Not Started | - |
 | 9 | Analytics | Not Started | - |
 | 10 | Production Engineering | Not Started | - |
@@ -150,3 +150,26 @@
 - Databricks Serverless Compute vs Classic Clusters
 - ABFS protocol driver (`abfss://`) and DFS endpoints
 - SparkSession, DataFrames, and distributed reading
+
+---
+
+## Phase 6 - Silver Layer (Delta Lake & Transformations)
+
+**Status**: Completed
+**Completed date**: October 2026
+
+### Completed
+- [x] **Silver Trips Delta Table**: 2,133,221 clean rows saved to `silver/tlc/yellow_tripdata_2024-01`, partitioned by `pickup_date`
+- [x] **Trips Quarantine Delta Table**: 831,385 flagged records preserved in `silver_quarantine/tlc/yellow_tripdata_2024-01` with rejection reason arrays
+- [x] **Silver Weather Delta Table**: 744 hourly rows (31 days × 24 hrs) saved to `silver/weather/hourly_nyc_2024-01`, partitioned by `observation_date`
+- [x] **Silver Zones Delta Table**: 265 validated zones saved to `silver/zones/taxi_zone_lookup`, primary key uniqueness verified
+- [x] Automated data quality profiling audit executed across all columns
+
+### Key concepts learned
+- **Quarantine / Dead-Letter Queue Pattern**: Capturing bad records with explicit reason tags (`_reject_reasons`) rather than silent dropping
+- **Feature Engineering**: Deriving domain metrics (`trip_duration_minutes`, `average_speed_mph`, `tip_percentage`, `precipitation_category`, unit conversions)
+- **Complex JSON Unnesting**: Parallel array flattening via `F.arrays_zip` and `F.posexplode`
+- **Delta Lake Partitioning**: Physical directory partitioning (`pickup_date`, `observation_date`) for partition pruning query optimization
+- **Data Quality Assertions**: Programmatic primary key uniqueness validation (`assert total_rows == distinct_ids`)
+- **ACID Transactions**: Storing datasets in open-standard Delta Lake format with transaction logs (`_delta_log/`)
+
