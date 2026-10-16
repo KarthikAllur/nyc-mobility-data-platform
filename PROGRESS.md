@@ -18,7 +18,7 @@
 | 4 | Azure Data Factory | Completed | October 2026 |
 | 5 | Databricks | Completed | October 2026 |
 | 6 | Silver Layer | Completed | October 2026 |
-| 7 | Gold Layer | In Progress | - |
+| 7 | Gold Layer | Completed | October 2026 |
 | 8 | Orchestration | Not Started | - |
 | 9 | Analytics | Not Started | - |
 | 10 | Production Engineering | Not Started | - |
@@ -172,4 +172,25 @@
 - **Delta Lake Partitioning**: Physical directory partitioning (`pickup_date`, `observation_date`) for partition pruning query optimization
 - **Data Quality Assertions**: Programmatic primary key uniqueness validation (`assert total_rows == distinct_ids`)
 - **ACID Transactions**: Storing datasets in open-standard Delta Lake format with transaction logs (`_delta_log/`)
+
+---
+
+## Phase 7 - Gold Layer (Star Schema & Business Marts)
+
+**Status**: Completed
+**Completed date**: October 2026
+
+### Completed
+- [x] **Gold Enriched Trips**: 2,133,221 rows with zone + weather context embedded per row (`gold/tlc/enriched_trips_2024-01`)
+- [x] **Join Integrity Validation**: Programmatic fan-out assertion (`Silver 2,133,221 = Gold 2,133,221 ✓`)
+- [x] **Gold Daily Borough Summary**: 201 rows (31 days × 6 boroughs) with revenue, fare, speed, and weather KPIs (`gold/tlc/daily_borough_summary_2024-01`)
+- [x] **Gold Hourly Demand & Weather**: 744 rows (31 days × 24 hours) correlating trip demand with temperature, precipitation, and wind speed (`gold/tlc/hourly_demand_weather_2024-01`)
+
+### Key concepts learned
+- **Star Schema Joins**: Joining fact table to dimension tables (dim_zone twice — pickup + dropoff, dim_weather on date+hour multi-key join)
+- **Fan-Out Detection**: `assert gold_count == silver_count` to prevent silent row multiplication from bad joins
+- **Business Aggregation Marts**: `groupBy` → `.agg()` collapsing millions of rows into business-ready summary tables
+- **`F.first()` vs `.avg()`**: Using `first()` for constant-within-group columns (weather) vs `avg()` for variable metrics (fare, duration)
+- **Left Joins in Data Lakes**: Using `how="left"` to preserve all fact rows even when dimension data is missing
+- **Gold Layer Does Not Partition Small Tables**: ~201 and ~744 row tables write without `partitionBy` to avoid file fragmentation
 
