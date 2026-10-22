@@ -19,8 +19,8 @@
 | 5 | Databricks | Completed | October 2026 |
 | 6 | Silver Layer | Completed | October 2026 |
 | 7 | Gold Layer | Completed | October 2026 |
-| 8 | Orchestration | Not Started | - |
-| 9 | Analytics | Not Started | - |
+| 8 | Orchestration | Completed | October 2026 |
+| 9 | Analytics | Skipped (DE Focus) | October 2026 |
 | 10 | Production Engineering | Not Started | - |
 | 11 | dbt | Not Started | - |
 | 12 | Synapse | Not Started | - |
@@ -193,4 +193,28 @@
 - **`F.first()` vs `.avg()`**: Using `first()` for constant-within-group columns (weather) vs `avg()` for variable metrics (fare, duration)
 - **Left Joins in Data Lakes**: Using `how="left"` to preserve all fact rows even when dimension data is missing
 - **Gold Layer Does Not Partition Small Tables**: ~201 and ~744 row tables write without `partitionBy` to avoid file fragmentation
+
+---
+
+## Phase 8 - End-to-End Orchestration & Automation
+
+**Status**: Completed  
+**Completed date**: October 2026
+
+### Completed
+- [x] **Databricks Linked Service** (`ls_databricks_nyc_mobility`) configured with Databricks Access Token (`all APIs` scope) and Serverless compute.
+- [x] **Databricks Serverless Job** (`job_nyc_mobility_lakehouse`, ID: `392917716271722`) created wrapping notebook `01_bronze_to_silver_tlc`.
+- [x] **Dynamic Parameterization**: Databricks widgets + ADF parameters enabling zero-code multi-month processing via `YearMonth`.
+- [x] **Dynamic Calendar Calculations**: Built ADF expression using `addToTime` and `addDays` to automatically calculate month boundaries and leap year ends (e.g. `2024-02-29`) for Open-Meteo REST API.
+- [x] **Master End-to-End Pipeline** (`pl_master_end_to_end`):
+  - Step 1: `ep_ingest_bronze` (`pl_master_bronze_ingestion`) — downloads raw TLC Parquet + Weather JSON.
+  - Step 2: `job_transform_lakehouse` — triggers Databricks Serverless Job to clean Silver Delta, handle quarantine, and build Gold Delta marts.
+- [x] **Successful Verification Run**: `2024-02` (February 2024) executed end-to-end with 100% green status (`ep_ingest_bronze`: 29s, `job_transform_lakehouse`: 2m 15s).
+
+### Key concepts learned
+- **Master-Child Orchestration Pattern**: Decoupling ingestion controller (`pl_master_bronze_ingestion`) from end-to-end lakehouse workflow (`pl_master_end_to_end`).
+- **Serverless Databricks via ADF Job Activity**: Using the `Job` activity in ADF to invoke Databricks Serverless compute rather than legacy VM cluster activities.
+- **Dynamic Expression Functions**: Combining `@concat`, `@addToTime`, and `@addDays` to handle variable calendar lengths and leap years programmatically.
+- **Fail-Fast Data Validation**: Pre-execution input validation inside Databricks to catch missing upstream files early before Spark execution.
+
 
