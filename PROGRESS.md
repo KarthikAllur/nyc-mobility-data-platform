@@ -209,7 +209,15 @@
 - [x] **Master End-to-End Pipeline** (`pl_master_end_to_end`):
   - Step 1: `ep_ingest_bronze` (`pl_master_bronze_ingestion`) — downloads raw TLC Parquet + Weather JSON.
   - Step 2: `job_transform_lakehouse` — triggers Databricks Serverless Job to clean Silver Delta, handle quarantine, and build Gold Delta marts.
-- [x] **Successful Verification Run**: `2024-02` (February 2024) executed end-to-end with 100% green status (`ep_ingest_bronze`: 29s, `job_transform_lakehouse`: 2m 15s).
+- [x] **Enterprise Watermark Control Framework**:
+  - ADLS Control File: `config/watermark.json` storing state (`last_processed_month`, `next_month`, `status`).
+  - ADF `Lookup` activity (`LKP_watermark`) dynamically evaluates pending batch partition.
+  - ADF `If Condition` activity (`Check_Backfill_Pending`) automatically halts pipeline once `BACKFILL_COMPLETE`.
+  - Concurrency set to `1` to eliminate race conditions.
+  - Guarded Databricks script programmatically advances watermark pointer to next month upon 100% Gold completion.
+- [x] **Successful Verification Runs**:
+  - `2024-02` (February 2024): End-to-end verified (`ep_ingest_bronze`: 29s, `job_transform_lakehouse`: 2m 15s).
+  - `2024-03` (March 2024): 100% autonomous execution via Watermark (`LKP_watermark`: 14s, `ep_ingest_bronze`: 21s, `job_transform_lakehouse`: 1m 59s). Watermark auto-advanced to `2024-04`.
 
 ### Key concepts learned
 - **Master-Child Orchestration Pattern**: Decoupling ingestion controller (`pl_master_bronze_ingestion`) from end-to-end lakehouse workflow (`pl_master_end_to_end`).
