@@ -1,0 +1,6 @@
+{
+  "last_processed_month": "2024-04",
+  "next_month": "2024-05",
+  "status": "SUCCESS",
+  "description": "Metadata-driven high-watermark state tracking for autonomous monthly batch lakehouse ingestion"
+}
