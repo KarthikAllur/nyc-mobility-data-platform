@@ -218,6 +218,7 @@
 - [x] **Successful Verification Runs**:
   - `2024-02` (February 2024): End-to-end verified (`ep_ingest_bronze`: 29s, `job_transform_lakehouse`: 2m 15s).
   - `2024-03` (March 2024): 100% autonomous execution via Watermark (`LKP_watermark`: 14s, `ep_ingest_bronze`: 21s, `job_transform_lakehouse`: 1m 59s). Watermark auto-advanced to `2024-04`.
+  - `2024-04` (April 2024): **100% Autonomous Scheduled Trigger Run** (`tr_daily_backfill_twice_a_day`) fired at 9:00:00 AM IST on schedule (total pipeline runtime: 3m 28s). Ingested April TLC + Weather, transformed Silver/Gold, and auto-advanced watermark to `2024-05`.
 
 ### Key concepts learned
 - **Master-Child Orchestration Pattern**: Decoupling ingestion controller (`pl_master_bronze_ingestion`) from end-to-end lakehouse workflow (`pl_master_end_to_end`).
