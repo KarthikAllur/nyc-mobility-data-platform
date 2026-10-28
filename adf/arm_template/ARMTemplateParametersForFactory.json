@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "value": "adf-nyc-mobility-dev"
+        },
+        "ls_adls_nyc_mobility_accountKey": {
+            "value": ""
+        },
+        "ls_databricks_nyc_mobility_accessToken": {
+            "value": ""
+        },
+        "ls_adls_nyc_mobility_properties_typeProperties_url": {
+            "value": "https://stnycmobilitydevka.dfs.core.windows.net/"
+        },
+        "ls_http_tlc_properties_typeProperties_url": {
+            "value": "https://d37ci6vzurychx.cloudfront.net"
+        },
+        "ls_http_weather_api_properties_typeProperties_url": {
+            "value": "https://archive-api.open-meteo.com"
+        }
+    }
+}

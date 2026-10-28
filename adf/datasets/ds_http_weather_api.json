@@ -1,0 +1,30 @@
+{
+  "name": "ds_http_weather_api",
+  "type": "Microsoft.DataFactory/factories/datasets",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "ls_http_weather_api",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "YearMonth": {
+        "type": "string",
+        "defaultValue": "2024-01"
+      }
+    },
+    "annotations": [],
+    "type": "Binary",
+    "typeProperties": {
+      "location": {
+        "type": "HttpServerLocation",
+        "relativeUrl": {
+          "value": "@concat('v1/archive?latitude=40.7128&longitude=-74.0060&start_date=', dataset().YearMonth, '-01&end_date=', addDays(addToTime(concat(dataset().YearMonth, '-01T00:00:00Z'), 1, 'Month'), -1, 'yyyy-MM-dd'), '&hourly=temperature_2m,precipitation,wind_speed_10m&timezone=America/New_York')\n",
+          "type": "Expression"
+        }
+      }
+    }
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/linkedServices/ls_http_weather_api')]"
+  ]
+}

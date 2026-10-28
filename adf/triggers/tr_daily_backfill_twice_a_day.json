@@ -1,0 +1,29 @@
+{
+  "name": "tr_daily_backfill_twice_a_day",
+  "type": "Microsoft.DataFactory/factories/triggers",
+  "properties": {
+    "annotations": [],
+    "runtimeState": "Started",
+    "pipelines": [
+      {
+        "pipelineReference": {
+          "referenceName": "pl_master_end_to_end",
+          "type": "PipelineReference"
+        },
+        "parameters": {}
+      }
+    ],
+    "type": "ScheduleTrigger",
+    "typeProperties": {
+      "recurrence": {
+        "frequency": "Hour",
+        "interval": 12,
+        "startTime": "2026-10-28T09:00:00",
+        "timeZone": "India Standard Time"
+      }
+    }
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/pipelines/pl_master_end_to_end')]"
+  ]
+}

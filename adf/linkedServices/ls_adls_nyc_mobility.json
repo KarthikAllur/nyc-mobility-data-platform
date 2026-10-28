@@ -1,0 +1,16 @@
+{
+  "name": "ls_adls_nyc_mobility",
+  "type": "Microsoft.DataFactory/factories/linkedServices",
+  "properties": {
+    "annotations": [],
+    "type": "AzureBlobFS",
+    "typeProperties": {
+      "url": "[parameters('ls_adls_nyc_mobility_properties_typeProperties_url')]",
+      "accountKey": {
+        "type": "SecureString",
+        "value": "[parameters('ls_adls_nyc_mobility_accountKey')]"
+      }
+    }
+  },
+  "dependsOn": []
+}

@@ -1,0 +1,63 @@
+{
+  "name": "pl_ingest_zone_lookup_bronze",
+  "type": "Microsoft.DataFactory/factories/pipelines",
+  "properties": {
+    "activities": [
+      {
+        "name": "Copy_Zone_Lookup_to_Bronze",
+        "type": "Copy",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "source": {
+            "type": "BinarySource",
+            "storeSettings": {
+              "type": "HttpReadSettings",
+              "requestMethod": "GET"
+            },
+            "formatSettings": {
+              "type": "BinaryReadSettings"
+            }
+          },
+          "sink": {
+            "type": "BinarySink",
+            "storeSettings": {
+              "type": "AzureBlobFSWriteSettings"
+            }
+          },
+          "enableStaging": false
+        },
+        "inputs": [
+          {
+            "referenceName": "ds_http_taxi_zone_lookup",
+            "type": "DatasetReference",
+            "parameters": {}
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "ds_adls_bronze_zones",
+            "type": "DatasetReference",
+            "parameters": {}
+          }
+        ]
+      }
+    ],
+    "policy": {
+      "elapsedTimeMetric": {}
+    },
+    "annotations": [],
+    "lastPublishTime": "2026-10-07T11:50:41Z"
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/datasets/ds_http_taxi_zone_lookup')]",
+    "[concat(variables('factoryId'), '/datasets/ds_adls_bronze_zones')]"
+  ]
+}

@@ -1,0 +1,790 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-nyc-mobility-dev"
+        },
+        "ls_adls_nyc_mobility_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'ls_adls_nyc_mobility'"
+        },
+        "ls_databricks_nyc_mobility_accessToken": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accessToken' of 'ls_databricks_nyc_mobility'"
+        },
+        "ls_adls_nyc_mobility_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://stnycmobilitydevka.dfs.core.windows.net/"
+        },
+        "ls_http_tlc_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://d37ci6vzurychx.cloudfront.net"
+        },
+        "ls_http_weather_api_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://archive-api.open-meteo.com"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/tr_daily_backfill_twice_a_day')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "pl_master_end_to_end",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Hour",
+                        "interval": 12,
+                        "startTime": "2026-10-28T09:00:00",
+                        "timeZone": "India Standard Time"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/pl_master_end_to_end')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_adls_nyc_mobility')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('ls_adls_nyc_mobility_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('ls_adls_nyc_mobility_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_http_tlc')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "HttpServer",
+                "typeProperties": {
+                    "url": "[parameters('ls_http_tlc_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_http_weather_api')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "HttpServer",
+                "typeProperties": {
+                    "url": "[parameters('ls_http_weather_api_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_databricks_nyc_mobility')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureDatabricks",
+                "typeProperties": {
+                    "domain": "https://adb-7405608450585542.2.azuredatabricks.net",
+                    "accessToken": {
+                        "type": "SecureString",
+                        "value": "[parameters('ls_databricks_nyc_mobility_accessToken')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_adls_bronze_tlc')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_adls_nyc_mobility",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "p_year_month": {
+                        "type": "string",
+                        "defaultValue": "2024-01"
+                    }
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": {
+                            "value": "@concat('yellow_tripdata_', dataset().p_year_month, '.parquet')\n",
+                            "type": "Expression"
+                        },
+                        "folderPath": "bronze/tlc",
+                        "fileSystem": "mobility"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_adls_nyc_mobility')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_http_tlc_yellow_taxi')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_http_tlc",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "p_year_month": {
+                        "type": "string",
+                        "defaultValue": "2024-01"
+                    }
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": {
+                            "value": "@concat('trip-data/yellow_tripdata_', dataset().p_year_month, '.parquet')\n",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_http_tlc')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_adls_bronze_zones')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_adls_nyc_mobility",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "taxi_zone_lookup.csv",
+                        "folderPath": "bronze/zones",
+                        "fileSystem": "mobility"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_adls_nyc_mobility')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_http_taxi_zone_lookup')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_http_tlc",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": "misc/taxi_zone_lookup.csv"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_http_tlc')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_adls_bronze_weather')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_adls_nyc_mobility",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "YearMonth": {
+                        "type": "string",
+                        "defaultValue": "2024-01"
+                    }
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": {
+                            "value": "@concat('weather_', dataset().YearMonth, '.json')\n",
+                            "type": "Expression"
+                        },
+                        "folderPath": "bronze/weather",
+                        "fileSystem": "mobility"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_adls_nyc_mobility')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_http_weather_api')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_http_weather_api",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "YearMonth": {
+                        "type": "string",
+                        "defaultValue": "2024-01"
+                    }
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "HttpServerLocation",
+                        "relativeUrl": {
+                            "value": "@concat('v1/archive?latitude=40.7128&longitude=-74.0060&start_date=', dataset().YearMonth, '-01&end_date=', addDays(addToTime(concat(dataset().YearMonth, '-01T00:00:00Z'), 1, 'Month'), -1, 'yyyy-MM-dd'), '&hourly=temperature_2m,precipitation,wind_speed_10m&timezone=America/New_York')\n",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_http_weather_api')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_watermark')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_adls_nyc_mobility",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": "watermark.json",
+                        "folderPath": "config",
+                        "fileSystem": "mobility"
+                    },
+                    "encodingName": "UTF-8"
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "last_processed_month": {
+                            "type": "string"
+                        },
+                        "next_month": {
+                            "type": "string"
+                        },
+                        "status": {
+                            "type": "string"
+                        },
+                        "last_run_timestamp": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_adls_nyc_mobility')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pl_ingest_tlc_bronze')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Copy_TLC_to_Bronze",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "BinarySource",
+                                "storeSettings": {
+                                    "type": "HttpReadSettings",
+                                    "requestMethod": "GET"
+                                },
+                                "formatSettings": {
+                                    "type": "BinaryReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "BinarySink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "ds_http_tlc_yellow_taxi",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "p_year_month": {
+                                        "value": "@pipeline().parameters.YearMonth",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ds_adls_bronze_tlc",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "p_year_month": {
+                                        "value": "@pipeline().parameters.YearMonth",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "YearMonth": {
+                        "type": "string",
+                        "defaultValue": "2024-01"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-10-07T13:20:20Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ds_http_tlc_yellow_taxi')]",
+                "[concat(variables('factoryId'), '/datasets/ds_adls_bronze_tlc')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pl_ingest_zone_lookup_bronze')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Copy_Zone_Lookup_to_Bronze",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "BinarySource",
+                                "storeSettings": {
+                                    "type": "HttpReadSettings",
+                                    "requestMethod": "GET"
+                                },
+                                "formatSettings": {
+                                    "type": "BinaryReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "BinarySink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "ds_http_taxi_zone_lookup",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ds_adls_bronze_zones",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-10-07T11:50:41Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ds_http_taxi_zone_lookup')]",
+                "[concat(variables('factoryId'), '/datasets/ds_adls_bronze_zones')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pl_ingest_weather_bronze')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "pl_ingest_weather_bronze",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "BinarySource",
+                                "storeSettings": {
+                                    "type": "HttpReadSettings",
+                                    "requestMethod": "GET"
+                                },
+                                "formatSettings": {
+                                    "type": "BinaryReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "BinarySink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "ds_http_weather_api",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "YearMonth": {
+                                        "value": "@pipeline().parameters.YearMonth",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ds_adls_bronze_weather",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "YearMonth": {
+                                        "value": "@pipeline().parameters.YearMonth",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "YearMonth": {
+                        "type": "string",
+                        "defaultValue": "2024-01"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-10-22T13:09:36Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ds_http_weather_api')]",
+                "[concat(variables('factoryId'), '/datasets/ds_adls_bronze_weather')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pl_master_bronze_ingestion')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Exec_Ingest_Zones",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "pl_ingest_zone_lookup_bronze",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "Exec_Ingest_Weather",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "pl_ingest_weather_bronze",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "YearMonth": {
+                                    "value": "@pipeline().parameters.YearMonth",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "Exec_Ingest_TLC",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "pl_ingest_tlc_bronze",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "YearMonth": {
+                                    "value": "@pipeline().parameters.YearMonth",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "YearMonth": {
+                        "type": "string",
+                        "defaultValue": "2024-01"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-10-22T13:09:38Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/pl_ingest_zone_lookup_bronze')]",
+                "[concat(variables('factoryId'), '/pipelines/pl_ingest_weather_bronze')]",
+                "[concat(variables('factoryId'), '/pipelines/pl_ingest_tlc_bronze')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pl_master_end_to_end')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "End-to-end Lakehouse Orchestrator: Bronze Ingestion -> Silver Delta -> Gold Marts",
+                "activities": [
+                    {
+                        "name": "LKP_watermark",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "dataset": {
+                                "referenceName": "ds_watermark",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        }
+                    },
+                    {
+                        "name": "Check_Backfill_Pending",
+                        "type": "IfCondition",
+                        "dependsOn": [
+                            {
+                                "activity": "LKP_watermark",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "expression": {
+                                "value": "@not(equals(activity('LKP_watermark').output.firstRow.status, 'BACKFILL_COMPLETE'))\n",
+                                "type": "Expression"
+                            },
+                            "ifTrueActivities": [
+                                {
+                                    "name": "ep_ingest_bronze",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "pl_master_bronze_ingestion",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "YearMonth": {
+                                                "value": "@activity('LKP_watermark').output.firstRow.next_month\n",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "name": "job_transform_lakehouse",
+                                    "type": "DatabricksJob",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "ep_ingest_bronze",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "jobId": "392917716271722",
+                                        "jobParameters": {
+                                            "YearMonth": {
+                                                "value": "@activity('LKP_watermark').output.firstRow.next_month\n",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    },
+                                    "linkedServiceName": {
+                                        "referenceName": "ls_databricks_nyc_mobility",
+                                        "type": "LinkedServiceReference"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "concurrency": 1,
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "YearMonth": {
+                        "type": "string",
+                        "defaultValue": "2024-02"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-10-27T15:55:44Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ds_watermark')]",
+                "[concat(variables('factoryId'), '/pipelines/pl_master_bronze_ingestion')]",
+                "[concat(variables('factoryId'), '/linkedServices/ls_databricks_nyc_mobility')]"
+            ]
+        }
+    ]
+}

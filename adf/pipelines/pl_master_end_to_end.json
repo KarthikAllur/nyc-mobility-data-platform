@@ -1,0 +1,133 @@
+{
+  "name": "pl_master_end_to_end",
+  "type": "Microsoft.DataFactory/factories/pipelines",
+  "properties": {
+    "description": "End-to-end Lakehouse Orchestrator: Bronze Ingestion -> Silver Delta -> Gold Marts",
+    "activities": [
+      {
+        "name": "LKP_watermark",
+        "type": "Lookup",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "source": {
+            "type": "JsonSource",
+            "storeSettings": {
+              "type": "AzureBlobFSReadSettings",
+              "recursive": true,
+              "enablePartitionDiscovery": false
+            },
+            "formatSettings": {
+              "type": "JsonReadSettings"
+            }
+          },
+          "dataset": {
+            "referenceName": "ds_watermark",
+            "type": "DatasetReference",
+            "parameters": {}
+          }
+        }
+      },
+      {
+        "name": "Check_Backfill_Pending",
+        "type": "IfCondition",
+        "dependsOn": [
+          {
+            "activity": "LKP_watermark",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "userProperties": [],
+        "typeProperties": {
+          "expression": {
+            "value": "@not(equals(activity('LKP_watermark').output.firstRow.status, 'BACKFILL_COMPLETE'))\n",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [
+            {
+              "name": "ep_ingest_bronze",
+              "type": "ExecutePipeline",
+              "dependsOn": [],
+              "policy": {
+                "secureInput": false
+              },
+              "userProperties": [],
+              "typeProperties": {
+                "pipeline": {
+                  "referenceName": "pl_master_bronze_ingestion",
+                  "type": "PipelineReference"
+                },
+                "waitOnCompletion": true,
+                "parameters": {
+                  "YearMonth": {
+                    "value": "@activity('LKP_watermark').output.firstRow.next_month\n",
+                    "type": "Expression"
+                  }
+                }
+              }
+            },
+            {
+              "name": "job_transform_lakehouse",
+              "type": "DatabricksJob",
+              "dependsOn": [
+                {
+                  "activity": "ep_ingest_bronze",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "userProperties": [],
+              "typeProperties": {
+                "jobId": "392917716271722",
+                "jobParameters": {
+                  "YearMonth": {
+                    "value": "@activity('LKP_watermark').output.firstRow.next_month\n",
+                    "type": "Expression"
+                  }
+                }
+              },
+              "linkedServiceName": {
+                "referenceName": "ls_databricks_nyc_mobility",
+                "type": "LinkedServiceReference"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "concurrency": 1,
+    "policy": {
+      "elapsedTimeMetric": {}
+    },
+    "parameters": {
+      "YearMonth": {
+        "type": "string",
+        "defaultValue": "2024-02"
+      }
+    },
+    "annotations": [],
+    "lastPublishTime": "2026-10-27T15:55:44Z"
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/datasets/ds_watermark')]",
+    "[concat(variables('factoryId'), '/pipelines/pl_master_bronze_ingestion')]",
+    "[concat(variables('factoryId'), '/linkedServices/ls_databricks_nyc_mobility')]"
+  ]
+}

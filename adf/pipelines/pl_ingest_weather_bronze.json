@@ -1,0 +1,79 @@
+{
+  "name": "pl_ingest_weather_bronze",
+  "type": "Microsoft.DataFactory/factories/pipelines",
+  "properties": {
+    "activities": [
+      {
+        "name": "pl_ingest_weather_bronze",
+        "type": "Copy",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "source": {
+            "type": "BinarySource",
+            "storeSettings": {
+              "type": "HttpReadSettings",
+              "requestMethod": "GET"
+            },
+            "formatSettings": {
+              "type": "BinaryReadSettings"
+            }
+          },
+          "sink": {
+            "type": "BinarySink",
+            "storeSettings": {
+              "type": "AzureBlobFSWriteSettings"
+            }
+          },
+          "enableStaging": false
+        },
+        "inputs": [
+          {
+            "referenceName": "ds_http_weather_api",
+            "type": "DatasetReference",
+            "parameters": {
+              "YearMonth": {
+                "value": "@pipeline().parameters.YearMonth",
+                "type": "Expression"
+              }
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "ds_adls_bronze_weather",
+            "type": "DatasetReference",
+            "parameters": {
+              "YearMonth": {
+                "value": "@pipeline().parameters.YearMonth",
+                "type": "Expression"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "policy": {
+      "elapsedTimeMetric": {}
+    },
+    "parameters": {
+      "YearMonth": {
+        "type": "string",
+        "defaultValue": "2024-01"
+      }
+    },
+    "annotations": [],
+    "lastPublishTime": "2026-10-22T13:09:36Z"
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/datasets/ds_http_weather_api')]",
+    "[concat(variables('factoryId'), '/datasets/ds_adls_bronze_weather')]"
+  ]
+}

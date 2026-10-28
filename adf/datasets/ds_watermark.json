@@ -1,0 +1,41 @@
+{
+  "name": "ds_watermark",
+  "type": "Microsoft.DataFactory/factories/datasets",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "ls_adls_nyc_mobility",
+      "type": "LinkedServiceReference"
+    },
+    "annotations": [],
+    "type": "Json",
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileName": "watermark.json",
+        "folderPath": "config",
+        "fileSystem": "mobility"
+      },
+      "encodingName": "UTF-8"
+    },
+    "schema": {
+      "type": "object",
+      "properties": {
+        "last_processed_month": {
+          "type": "string"
+        },
+        "next_month": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "last_run_timestamp": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/linkedServices/ls_adls_nyc_mobility')]"
+  ]
+}

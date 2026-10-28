@@ -1,0 +1,23 @@
+{
+  "name": "ds_adls_bronze_zones",
+  "type": "Microsoft.DataFactory/factories/datasets",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "ls_adls_nyc_mobility",
+      "type": "LinkedServiceReference"
+    },
+    "annotations": [],
+    "type": "Binary",
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileName": "taxi_zone_lookup.csv",
+        "folderPath": "bronze/zones",
+        "fileSystem": "mobility"
+      }
+    }
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/linkedServices/ls_adls_nyc_mobility')]"
+  ]
+}

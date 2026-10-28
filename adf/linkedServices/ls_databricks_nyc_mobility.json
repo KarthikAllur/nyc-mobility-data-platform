@@ -1,0 +1,16 @@
+{
+  "name": "ls_databricks_nyc_mobility",
+  "type": "Microsoft.DataFactory/factories/linkedServices",
+  "properties": {
+    "annotations": [],
+    "type": "AzureDatabricks",
+    "typeProperties": {
+      "domain": "https://adb-7405608450585542.2.azuredatabricks.net",
+      "accessToken": {
+        "type": "SecureString",
+        "value": "[parameters('ls_databricks_nyc_mobility_accessToken')]"
+      }
+    }
+  },
+  "dependsOn": []
+}

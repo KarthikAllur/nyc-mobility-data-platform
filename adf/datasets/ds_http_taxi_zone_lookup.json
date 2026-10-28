@@ -1,0 +1,21 @@
+{
+  "name": "ds_http_taxi_zone_lookup",
+  "type": "Microsoft.DataFactory/factories/datasets",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "ls_http_tlc",
+      "type": "LinkedServiceReference"
+    },
+    "annotations": [],
+    "type": "Binary",
+    "typeProperties": {
+      "location": {
+        "type": "HttpServerLocation",
+        "relativeUrl": "misc/taxi_zone_lookup.csv"
+      }
+    }
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/linkedServices/ls_http_tlc')]"
+  ]
+}

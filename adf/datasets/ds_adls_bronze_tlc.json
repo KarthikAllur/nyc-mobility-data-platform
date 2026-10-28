@@ -1,0 +1,32 @@
+{
+  "name": "ds_adls_bronze_tlc",
+  "type": "Microsoft.DataFactory/factories/datasets",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "ls_adls_nyc_mobility",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "p_year_month": {
+        "type": "string",
+        "defaultValue": "2024-01"
+      }
+    },
+    "annotations": [],
+    "type": "Binary",
+    "typeProperties": {
+      "location": {
+        "type": "AzureBlobFSLocation",
+        "fileName": {
+          "value": "@concat('yellow_tripdata_', dataset().p_year_month, '.parquet')\n",
+          "type": "Expression"
+        },
+        "folderPath": "bronze/tlc",
+        "fileSystem": "mobility"
+      }
+    }
+  },
+  "dependsOn": [
+    "[concat(variables('factoryId'), '/linkedServices/ls_adls_nyc_mobility')]"
+  ]
+}

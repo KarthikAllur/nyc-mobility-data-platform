@@ -1,0 +1,14 @@
+{
+  "name": "ls_http_tlc",
+  "type": "Microsoft.DataFactory/factories/linkedServices",
+  "properties": {
+    "annotations": [],
+    "type": "HttpServer",
+    "typeProperties": {
+      "url": "[parameters('ls_http_tlc_properties_typeProperties_url')]",
+      "enableServerCertificateValidation": true,
+      "authenticationType": "Anonymous"
+    }
+  },
+  "dependsOn": []
+}
